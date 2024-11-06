@@ -20,7 +20,7 @@ void initialiser_plateau(Plateau* p) {
     for (int i = 0; i < 12; i++) {
         p->cases[i] = 4;  // Chaque case commence avec 4 graines
     }
-    /*
+    /* ==== CAS DE FAMINE SI LE JOUEUR1 CHOISI LA CASE 6 ======
     p->cases[0] = 2;
     p->cases[1] = 7;
     p->cases[2] = 0;
@@ -35,6 +35,22 @@ void initialiser_plateau(Plateau* p) {
     p->cases[11] = 0;
     */
 
+    /* ==== CAS DE FAMINE SI LE JOUEUR1 CHOISI LA CASE 6 ======*/
+    p->cases[0] = 2;
+    p->cases[1] = 14;
+    p->cases[2] = 0;
+    p->cases[3] = 0;
+    p->cases[4] = 0;
+    p->cases[5] = 1;
+    p->cases[6] = 2;
+    p->cases[7] = 0;
+    p->cases[8] = 0;
+    p->cases[9] = 0;
+    p->cases[10] = 0;
+    p->cases[11] = 0;
+    
+
+
     p->score_joueur1 = 0;
     p->score_joueur2 = 0;
     p->joueur_courant = 0;  // Joueur 1 commence
@@ -42,19 +58,21 @@ void initialiser_plateau(Plateau* p) {
 
 // Fonction pour afficher l'état du plateau
 void afficher_plateau(const Plateau* p) {
-    printf("%s (Joueur 1) : %d | %s (Joueur 2) : %d\n", p->pseudo_joueur1, p->score_joueur1, p->pseudo_joueur2, p->score_joueur2);
-    for (int i = 0; i < 6; i++) {
-        printf("%d ", p->cases[i]);
-    }
-    printf("\n");
+    printf("\n %s (Joueur 1) : %d | %s (Joueur 2) : %d\n", p->pseudo_joueur1, p->score_joueur1, p->pseudo_joueur2, p->score_joueur2);
+    
     for (int i = 11; i >= 6; i--) {
         printf("%d ", p->cases[i]);
     }
     printf("\n");
+    for (int i = 0; i < 6; i++) {
+        printf("%d ", p->cases[i]);
+    }
+    printf("\n");
     printf("A %s de jouer\n", p->joueur_courant == 0 ? p->pseudo_joueur1 : p->pseudo_joueur2);
-    printf("Tapez '0' pour abandonner votre tour.\n");
+    printf("Tapez '0' pour abandonner la partie.\n");
 }
 
+// Fonction pour jouer un coup
 // Fonction pour jouer un coup
 int jouer_coup(Plateau* p, int case_depart) {
     int debut = p->joueur_courant == 0 ? 0 : 6;
@@ -73,13 +91,20 @@ int jouer_coup(Plateau* p, int case_depart) {
     p->cases[case_depart] = 0;  // On enlève toutes les graines de la case choisie
     int index = case_depart;
 
+    // Vérification si la case contient 12 graines ou plus
+    int sauter_case = (graines_a_distribuer >= 12);  // Si la case choisie contient 12 graines ou plus, on doit la sauter
+
     // Distribution des graines
     while (graines_a_distribuer > 0) {
         index = (index + 1) % 12;  // On passe à la case suivante en boucle
-        if (index != case_depart) { // Ne remet pas les graines dans la case d'origine
-            p->cases[index]++;
-            graines_a_distribuer--;
+
+        // Si on doit sauter la case d'origine (si elle avait 12 graines ou plus)
+        if (sauter_case && index == case_depart) {
+            continue;  // On ne remet pas de graines dans la case d'origine
         }
+
+        p->cases[index]++;
+        graines_a_distribuer--;
     }
 
     // Vérifier la famine avant de manger des graines
@@ -133,6 +158,9 @@ int jouer_coup(Plateau* p, int case_depart) {
     return 1;  // Coup valide
 }
 
+
+
+
 // Fonction pour verifier la victoire
 int verifier_victoire(const Plateau* p) {
     if (p->score_joueur1 >= 25) {
@@ -162,7 +190,7 @@ int main() {
 
     while (!verifier_victoire(&plateau)) {
         afficher_plateau(&plateau);
-        printf("%s, choisissez une case (1-6 pour votre côté) ou tapez '0' pour abandonner la partie : ", plateau.joueur_courant == 0 ? plateau.pseudo_joueur1 : plateau.pseudo_joueur2);
+        printf("%s, choisissez une case (1-6 pour votre côté) : ", plateau.joueur_courant == 0 ? plateau.pseudo_joueur1 : plateau.pseudo_joueur2);
         int case_depart;
         scanf("%d", &case_depart);
 
