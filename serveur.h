@@ -1,54 +1,34 @@
-#ifndef SERVER_H
-#define SERVER_H
-
-#ifdef WIN32
-
-#include <winsock2.h>
-
-#elif defined (linux)
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include <arpa/inet.h>
-#include <unistd.h> /* close */
-#include <netdb.h> /* gethostbyname */
-#define INVALID_SOCKET -1
-#define SOCKET_ERROR -1
-#define closesocket(s) close(s)
-typedef int SOCKET;
-typedef struct sockaddr_in SOCKADDR_IN;
-typedef struct sockaddr SOCKADDR;
-typedef struct in_addr IN_ADDR;
+#include <sys/select.h>
+#include <time.h>
+#include "rules.h"
 
-#else
-
-#error not defined for this platform
-
-#endif
-
-#define CRLF "\r\n"
-#define PORT 1977
-#define MAX_CLIENTS 100
-
+#define PORT 1975
+#define MAX_CLIENTS 10
 #define BUF_SIZE 1024
 
-#include "client_ser.h"
-
-static void init(void);
-static void end(void);
-static void app(void);
-static int init_connection(void);
-static void end_connection(int sock);
-static int read_client(SOCKET sock, char *buffer);
-static void write_client(SOCKET sock, const char *buffer);
-static void send_message_to_all_clients(Client *clients, Client client, int actual, const char *buffer, char from_server);
-static void remove_client(Client *clients, int to_remove, int *actual);
-static void clear_clients(Client *clients, int actual);
-
-
-void send_connection_notification(Client *clients, int actual, const char *client_name);
 
 
 
-#endif /* guard */
+
+
+int init_server_socket();
+void handle_new_client(int server_sock);
+void handle_client_message(int client_index);
+void broadcast_clients_list();
+void send_to_client(int client_sock, const char *message);
+void remove_client(int index);
+int create_game_session(int client1_id, int client2_id);
+void handle_game_move(int game_index, int sender_id, int move);
+void handle_game_invitation(int sender_index, int target_id);
+int find_game_by_client_id(int client_id);
+void handle_accept_command(int receiver_index);
+void handle_decline_command(int receiver_index);
+void print_pending_invites();
+
+
+int find_client_by_id(int client_id);
