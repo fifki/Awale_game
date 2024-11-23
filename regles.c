@@ -24,7 +24,20 @@ void initialiser_plateau(Plateau* p) {
     for (int i = 0; i < 12; i++) {
         p->cases[i] = 4;  // Chaque case commence avec 4 graines
     }
-   
+    /*
+    p->cases[0] = 2;
+    p->cases[1] = 7;
+    p->cases[2] = 0;
+    p->cases[3] = 0;
+    p->cases[4] = 0;
+    p->cases[5] = 1;
+    p->cases[6] = 2;
+    p->cases[7] = 0;
+    p->cases[8] = 0;
+    p->cases[9] = 0;
+    p->cases[10] = 0;
+    p->cases[11] = 0;
+    */
 
     p->score_joueur1 = 0;
     p->score_joueur2 = 0;
