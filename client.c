@@ -1,103 +1,104 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <sys/select.h>
 
-#define SERVER_IP "127.0.0.1"
-#define SERVER_PORT 1975
+#ifdef WIN32
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32.lib")
+#else
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#define INVALID_SOCKET -1
+#define SOCKET_ERROR -1
+#define closesocket(s) close(s)
+typedef int SOCKET;
+typedef struct sockaddr_in SOCKADDR_IN;
+typedef struct sockaddr SOCKADDR;
+#endif
+
+#define SERVER_PORT 1977
 #define BUF_SIZE 1024
 
+void clear_input_buffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);
+}
+
 int main() {
-    int sock;
-    struct sockaddr_in server_address;
-    char buffer[BUF_SIZE];
+#ifdef WIN32
+    WSADATA wsa;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
+        fprintf(stderr, "Winsock initialization failed.\n");
+        return 1;
+    }
+#endif
 
-    // Create socket
-    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock == INVALID_SOCKET) {
         perror("Socket creation failed");
-        exit(EXIT_FAILURE);
-    }
-    printf("Socket created successfully.\n");
-
-    // Set server address
-    server_address.sin_family = AF_INET;
-    server_address.sin_port = htons(SERVER_PORT);
-    if (inet_pton(AF_INET, SERVER_IP, &server_address.sin_addr) <= 0) {
-        perror("Invalid address/Address not supported");
-        close(sock);
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     }
 
-    // Connect to server
-    if (connect(sock, (struct sockaddr *)&server_address, sizeof(server_address)) < 0) {
+    SOCKADDR_IN server_addr = {0};
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(SERVER_PORT);
+    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+    printf("Connecting to server...\n");
+    if (connect(sock, (SOCKADDR*)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
         perror("Connection failed");
-        close(sock);
-        exit(EXIT_FAILURE);
+        closesocket(sock);
+        return EXIT_FAILURE;
     }
-    printf("Connected to server at %s:%d\n", SERVER_IP, SERVER_PORT);
 
-    // Set socket to non-blocking mode
-    fcntl(sock, F_SETFL, O_NONBLOCK);
+    printf("Connected to server.\n");
 
-    // Set up select file descriptors
-    fd_set read_fds;
-    int max_fd = sock > STDIN_FILENO ? sock : STDIN_FILENO;
+    char buffer[BUF_SIZE];
+    fd_set rdfs;
 
-    printf("Enter message (or 'exit' to quit): ");
-
-    // Communication loop
     while (1) {
-        FD_ZERO(&read_fds);
-        FD_SET(sock, &read_fds);        // Monitor server messages
-        FD_SET(STDIN_FILENO, &read_fds); // Monitor user input
+        FD_ZERO(&rdfs);
+        FD_SET(STDIN_FILENO, &rdfs);
+        FD_SET(sock, &rdfs);
 
-        // Use select to wait for activity on either stdin or socket
-        int activity = select(max_fd + 1, &read_fds, NULL, NULL, NULL);
-        if (activity < 0) {
+        if (select(sock + 1, &rdfs, NULL, NULL, NULL) < 0) {
             perror("select() error");
             break;
         }
 
-        // Check if there's user input to send
-        if (FD_ISSET(STDIN_FILENO, &read_fds)) {
-            memset(buffer, 0, BUF_SIZE);
-            if (fgets(buffer, BUF_SIZE, stdin) == NULL) {
-                perror("Input error");
-                break;
-            }
+        if (FD_ISSET(STDIN_FILENO, &rdfs)) {
+            fgets(buffer, BUF_SIZE, stdin);
+            buffer[strcspn(buffer, "\n")] = '\0';
 
-            // Check for exit command
-            if (strncmp(buffer, "exit", 4) == 0) {
-                printf("Exiting...\n");
-                break;
-            }
-
-            // Send message to server
             if (send(sock, buffer, strlen(buffer), 0) < 0) {
-                perror("Send failed");
+                perror("send() error");
+                break;
+            }
+
+            if (strcmp(buffer, "EXIT") == 0) {
+                printf("Disconnecting from server...\n");
                 break;
             }
         }
 
-        // Check if there's a message from the server
-        if (FD_ISSET(sock, &read_fds)) {
-            memset(buffer, 0, BUF_SIZE);
+        if (FD_ISSET(sock, &rdfs)) {
             int n = recv(sock, buffer, BUF_SIZE - 1, 0);
             if (n <= 0) {
                 printf("Server disconnected.\n");
                 break;
             }
+
             buffer[n] = '\0';
-            printf("Server: %s\n", buffer);
-            printf("Enter message (or 'exit' to quit): ");
-            fflush(stdout);
+            printf("%s\n", buffer);
         }
     }
 
-    // Clean up and close socket
-    close(sock);
+    closesocket(sock);
+
+#ifdef WIN32
+    WSACleanup();
+#endif
+
     return 0;
 }
