@@ -12,16 +12,13 @@ typedef struct {
     char pseudo_joueur2[MAX_PSEUDO_LENGTH]; // Player 2's pseudonym
 } Plateau;
 
-// Initialize the game board
+
 void initialiser_plateau(Plateau* p);
 
-// Display the game board (for debugging or server logs)
 void afficher_plateau(const Plateau* p);
 
-// Play a move and update the game state
 int jouer_coup(Plateau* p, int case_depart);
 
-// Check if a player has won
 int verifier_victoire(const Plateau* p);
 
-#endif // REGLES_H
+#endif 
