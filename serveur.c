@@ -5,8 +5,8 @@
 #include <arpa/inet.h>
 #include <sys/select.h>
 #include <time.h>
-#include "server.h"
-#include "rules.h"
+#include "serveur.h"
+#include "regles.h"
 
 
 typedef struct {
