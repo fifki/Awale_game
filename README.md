@@ -19,15 +19,15 @@ Dependencies:
  - telnet (for testing the client)
  ## Installation
 ### Linux
-Clone the repository:
- - git clone https://github.com/your-repo/awale-game.git
+#### Clone the repository:
+ - git clone https://github.com/fifki/Awale_game
  - cd awale-game
-Compile the server and client:
+#### Compile the server and client:
  - gcc -o serveur serveur.c regles.c
  - gcc -o client client2.c
-Run :
+#### Run :
  - ./server
- - ./client <server-ip> 
+ - ./client  
 
 ### Windows
 Clone the repository using Git Bash or any Git client.
