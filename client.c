@@ -17,6 +17,7 @@ typedef struct sockaddr_in SOCKADDR_IN;
 typedef struct sockaddr SOCKADDR;
 #endif
 
+#define DEFAULT_SERVER_IP "127.0.0.1"
 #define SERVER_PORT 1977
 #define BUF_SIZE 1024
 
